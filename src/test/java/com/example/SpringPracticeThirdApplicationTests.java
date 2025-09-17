@@ -15,6 +15,7 @@ import com.example.answer.Answer;
 import com.example.answer.AnswerRepository;
 import com.example.question.Question;
 import com.example.question.QuestionRepository;
+import com.example.question.QuestionService;
 
 import jakarta.transaction.Transactional;
 
@@ -26,8 +27,10 @@ class SpringPracticeThirdApplicationTests {
 	
 	@Autowired
     private AnswerRepository answerRepository;
+	
+	@Autowired
+	private QuestionService questionService;
 
-	@Transactional
     @Test
     void testJpa() { 
     	/*
@@ -82,9 +85,6 @@ class SpringPracticeThirdApplicationTests {
         assertTrue(oa.isPresent());
         Answer a = oa.get();
         assertEquals(2, a.getQuestion().getId());
-    	 */
-    	
-        
         
         Optional<Question> oq = this.questionRepository.findById(2);
         assertTrue(oq.isPresent());
@@ -94,6 +94,15 @@ class SpringPracticeThirdApplicationTests {
 
         assertEquals(1, answerList.size());
         assertEquals("네 자동으로 생성됩니다.", answerList.get(0).getContent());
+    	 */
+    	
+		for (int i = 1; i <= 300; i++) {
+            String subject = String.format("테스트 데이터입니다:[%03d]", i);
+            String content = "내용무";
+            this.questionService.create(subject, content, null);
+        }
+        
+        
         
         
     }

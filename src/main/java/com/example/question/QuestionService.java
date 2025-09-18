@@ -36,14 +36,17 @@ public class QuestionService {
     
     private final CategoryRepository categoryRepository;
 
-    public Page<Question> getList(int page, String kw) {
-        List<Sort.Order> sorts = new ArrayList<>();
-        sorts.add(Sort.Order.desc("createDate"));
-        Pageable pageable = PageRequest.of(page, 10, Sort.by(sorts));
-        Specification<Question> spec = search(kw);
-        return this.questionRepository.findAll(spec, pageable);
+    public Page<Question> getList(int page, String kw, String filter) {
+        Pageable pageable = PageRequest.of(page, 10);
+
+        if ("answer".equals(filter)) {
+            return questionRepository.findQuestionsOrderByLatestAnswer(pageable);
+        } else if ("comment".equals(filter)) {
+            return questionRepository.findQuestionsOrderByLatestComment(pageable);
+        } else {
+            return questionRepository.findByKeyword(kw, pageable);
+        }
     }
-    
     @Transactional
     public Question getQuestion(Integer id) {  
         Optional<Question> question = this.questionRepository.findById(id);

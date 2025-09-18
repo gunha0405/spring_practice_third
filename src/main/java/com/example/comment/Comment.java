@@ -11,23 +11,26 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
+@Table(name = "comments")
 public class Comment {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer id;
+	private Long id;
 	
 	@ManyToOne
 	private SiteUser author;
 	
-	@Column(columnDefinition = "TEXT")
+	@Lob
 	private String content;
 	
 	private LocalDateTime createDate;
@@ -40,8 +43,8 @@ public class Comment {
 	@ManyToOne
 	private Answer answer;
 	
-	public Integer getQuestionId() {
-        Integer result = null;
+	public Long getQuestionId() {
+        Long result = null;
         if (this.question != null) {
             result = this.question.getId();
         } else if (this.answer != null) {

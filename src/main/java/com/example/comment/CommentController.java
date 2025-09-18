@@ -45,7 +45,7 @@ public class CommentController {
 	
 	@PreAuthorize("isAuthenticated()")
     @PostMapping("/create/question/{id}")
-    public String createQuestionComment(@PathVariable("id") Integer id,
+    public String createQuestionComment(@PathVariable("id") Long id,
                                         @Valid CommentForm commentForm,
                                         BindingResult bindingResult,
                                         Principal principal) {

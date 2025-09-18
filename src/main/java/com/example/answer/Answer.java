@@ -13,6 +13,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -26,10 +29,11 @@ public class Answer {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+	private Long id;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+	@Lob
+	@Column(length = 4000)
+	private String content;
 
     private LocalDateTime createDate; 
     
@@ -42,6 +46,11 @@ public class Answer {
     private SiteUser author;
     
     @ManyToMany
+    @JoinTable(
+        name = "answer_voter",
+        joinColumns = @JoinColumn(name = "answer_id"),
+        inverseJoinColumns = @JoinColumn(name = "voter_id")
+    )
     Set<SiteUser> voter;
     
     @OneToMany(mappedBy = "answer")

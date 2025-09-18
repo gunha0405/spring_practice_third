@@ -1,5 +1,6 @@
 package com.example.question;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.answer.Answer;
@@ -52,7 +54,7 @@ public class QuestionController {
 	
 	@GetMapping("/detail/{id}")
 	public String detail(Model model,
-	                     @PathVariable("id") Integer id,
+	                     @PathVariable("id") Long id,
 	                     @RequestParam(value = "page", defaultValue = "0") int page,
 	                     @RequestParam(value = "sort", defaultValue = "new") String sort) {
 	    Question question = this.questionService.getQuestion(id);
@@ -76,14 +78,17 @@ public class QuestionController {
 	
 	@PreAuthorize("isAuthenticated()")
     @PostMapping("/create")
-    public String questionCreate(@Valid QuestionForm questionForm, BindingResult bindingResult, Principal principal, Model model) {
+    public String questionCreate(@Valid QuestionForm questionForm, 
+    						     BindingResult bindingResult, 
+    						     @RequestParam("files") List<MultipartFile> files, 
+    						     Principal principal, Model model) throws IOException {
         if (bindingResult.hasErrors()) {
             model.addAttribute("categories", categoryService.getAllCategories());
             return "question_form";
         }
         SiteUser siteUser = this.userService.getUser(principal.getName());
         if (siteUser != null) {
-            this.questionService.create(questionForm.getSubject(), questionForm.getContent(), questionForm.getCategoryId(), siteUser);
+            this.questionService.create(questionForm.getSubject(), questionForm.getContent(), questionForm.getCategoryId(), files, siteUser);
             return "redirect:/question/list";
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
@@ -91,7 +96,7 @@ public class QuestionController {
 	
 	@PreAuthorize("isAuthenticated()")
     @GetMapping("/modify/{id}")
-    public String questionModify(QuestionForm questionForm, @PathVariable("id") Integer id, Principal principal) {
+    public String questionModify(QuestionForm questionForm, @PathVariable("id") Long id, Principal principal) {
         Question question = this.questionService.getQuestion(id);
         if(!question.getAuthor().getUsername().equals(principal.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수정권한이 없습니다.");
@@ -104,7 +109,7 @@ public class QuestionController {
 	@PreAuthorize("isAuthenticated()")
     @PostMapping("/modify/{id}")
     public String questionModify(@Valid QuestionForm questionForm, BindingResult bindingResult, 
-            Principal principal, @PathVariable("id") Integer id) {
+            Principal principal, @PathVariable("id") Long id) {
         if (bindingResult.hasErrors()) {
             return "question_form";
         }
@@ -118,7 +123,7 @@ public class QuestionController {
 	
 	@PreAuthorize("isAuthenticated()")
     @GetMapping("/delete/{id}")
-    public String questionDelete(Principal principal, @PathVariable("id") Integer id) {
+    public String questionDelete(Principal principal, @PathVariable("id") Long id) {
         Question question = this.questionService.getQuestion(id);
         if (!question.getAuthor().getUsername().equals(principal.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "삭제권한이 없습니다.");
@@ -129,7 +134,7 @@ public class QuestionController {
 	
 	@PreAuthorize("isAuthenticated()")
     @GetMapping("/vote/{id}")
-    public String questionVote(Principal principal, @PathVariable("id") Integer id) {
+    public String questionVote(Principal principal, @PathVariable("id") Long id) {
         Question question = this.questionService.getQuestion(id);
         SiteUser siteUser = this.userService.getUser(principal.getName());
         this.questionService.vote(question, siteUser);

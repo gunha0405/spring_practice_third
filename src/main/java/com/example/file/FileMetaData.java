@@ -1,23 +1,31 @@
-package com.example.category;
+package com.example.file;
 
-import jakarta.persistence.Column;
+import com.example.question.Question;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity
 @Getter
 @Setter
-public class Category {
-	
+@Entity
+public class FileMetaData {
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(unique = true, nullable = false, length = 50)
-	private String name;
+	private String originalName;
+	
+	private String savedName;
+	
+	private String filePath;
+	
+	@ManyToOne
+	private Question question;
 	
 }

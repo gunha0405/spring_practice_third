@@ -16,7 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.answer.Answer;
 import com.example.answer.AnswerForm;
+import com.example.answer.AnswerService;
+import com.example.category.Category;
+import com.example.category.CategoryService;
 import com.example.user.SiteUser;
 import com.example.user.UserService;
 
@@ -30,39 +34,59 @@ public class QuestionController {
 	
 	private final QuestionService questionService;
 	
+	private final AnswerService answerService;
+	
 	private final UserService userService;
+	
+	private final CategoryService categoryService;
 	
 	@GetMapping("/list")
     public String list(Model model, @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "kw", defaultValue = "") String kw) {
-        Page<Question> paging = this.questionService.getList(page, kw);
+            @RequestParam(value = "kw", defaultValue = "") String kw,
+            @RequestParam(value = "filter", defaultValue = "") String filter) {
+        Page<Question> paging = this.questionService.getList(page, kw, filter);
         model.addAttribute("paging", paging);
         model.addAttribute("kw", kw);
         return "question_list";
     }
 	
-	@GetMapping(value = "/detail/{id}")
-    public String detail(Model model, @PathVariable("id") Integer id, AnswerForm answerForm) {
-		Question question = this.questionService.getQuestion(id);
-        model.addAttribute("question", question);
-        return "question_detail";
-    }
+	@GetMapping("/detail/{id}")
+	public String detail(Model model,
+	                     @PathVariable("id") Integer id,
+	                     @RequestParam(value = "page", defaultValue = "0") int page,
+	                     @RequestParam(value = "sort", defaultValue = "new") String sort) {
+	    Question question = this.questionService.getQuestion(id);
+	    Page<Answer> paging = this.answerService.getAnswersByQuestion(question, page, sort);
+
+	    model.addAttribute("question", question);
+	    model.addAttribute("answerPaging", paging);
+	    model.addAttribute("answerForm", new AnswerForm());
+	    model.addAttribute("sort", sort);
+	    return "question_detail";
+	}
+
 	
 	@PreAuthorize("isAuthenticated()")
 	@GetMapping("/create")
-    public String questionCreate(QuestionForm questionForm) {
+    public String questionCreate(QuestionForm questionForm, Model model) {
+		List<Category> categories = this.categoryService.getAllCategories();
+        model.addAttribute("categories", categories);
         return "question_form";
     }
 	
 	@PreAuthorize("isAuthenticated()")
-	@PostMapping("/create")
-    public String questionCreate(@Valid QuestionForm questionForm, BindingResult bindingResult, Principal principal) {
+    @PostMapping("/create")
+    public String questionCreate(@Valid QuestionForm questionForm, BindingResult bindingResult, Principal principal, Model model) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("categories", categoryService.getAllCategories());
             return "question_form";
         }
-        SiteUser user = userService.getUser(principal.getName());
-        this.questionService.create(questionForm.getSubject(), questionForm.getContent(), user);
-        return "redirect:/question/list";
+        SiteUser siteUser = this.userService.getUser(principal.getName());
+        if (siteUser != null) {
+            this.questionService.create(questionForm.getSubject(), questionForm.getContent(), questionForm.getCategoryId(), siteUser);
+            return "redirect:/question/list";
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
     }
 	
 	@PreAuthorize("isAuthenticated()")

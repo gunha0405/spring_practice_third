@@ -1,12 +1,27 @@
 package com.example.user;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.DataNotFoundException;
+import com.example.answer.Answer;
+import com.example.answer.AnswerRepository;
+import com.example.comment.Comment;
+import com.example.comment.CommentRepository;
+import com.example.question.Question;
+import com.example.question.QuestionRepository;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -16,6 +31,14 @@ public class UserService {
 	private final UserRepository userRepository;
 	
 	private final PasswordEncoder passwordEncoder;
+	
+	private final JavaMailSender mailSender;
+	
+	private final QuestionRepository questionRepository;
+	
+	private final AnswerRepository answerRepository;
+	
+	private final CommentRepository commentRepository;
 	
 	public SiteUser create(String username, String email, String password, String customerId) {
         SiteUser user = new SiteUser();
@@ -36,4 +59,63 @@ public class UserService {
         }
     }
 	
+	public String resetPassword(String email) throws MessagingException {
+        Optional<SiteUser> optionalUser = userRepository.findByEmail(email);
+        if (!optionalUser.isPresent()) {
+            throw new DataNotFoundException("해당 이메일로 등록된 사용자가 없습니다.");
+        }
+        SiteUser user = optionalUser.get();
+
+        String tempPassword = generateTempPassword();
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        userRepository.save(user);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setTo(email);
+        helper.setSubject("임시 비밀번호 발송");
+        helper.setText("임시 비밀번호: " + tempPassword + "\n로그인 후 비밀번호를 변경해주세요.", true);
+        mailSender.send(message);
+
+        return "임시 비밀번호가 이메일로 전송되었습니다.";
+    }
+
+    public String changePassword(String username, String currentPassword, String newPassword, String confirmPassword) {
+        SiteUser user = getUser(username);
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return "비밀번호가 성공적으로 변경되었습니다.";
+    }
+
+    private String generateTempPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(10);
+        for (int i = 0; i < 10; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+	
+    public Page<Question> getUserQuestions(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Order.desc("createDate")));
+        return questionRepository.findByAuthorUsername(username, pageable);
+    }
+
+    public Page<Answer> getUserAnswers(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Order.desc("createDate")));
+        return answerRepository.findByAuthorUsername(username, pageable);
+    }
+
+    public Page<Comment> getUserComments(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Order.desc("createDate")));
+        return commentRepository.findByAuthorUsername(username, pageable);
+    }
+    
 }

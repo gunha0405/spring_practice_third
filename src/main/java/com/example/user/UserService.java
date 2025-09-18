@@ -3,12 +3,22 @@ package com.example.user;
 import java.security.SecureRandom;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.DataNotFoundException;
+import com.example.answer.Answer;
+import com.example.answer.AnswerRepository;
+import com.example.comment.Comment;
+import com.example.comment.CommentRepository;
+import com.example.question.Question;
+import com.example.question.QuestionRepository;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -23,6 +33,12 @@ public class UserService {
 	private final PasswordEncoder passwordEncoder;
 	
 	private final JavaMailSender mailSender;
+	
+	private final QuestionRepository questionRepository;
+	
+	private final AnswerRepository answerRepository;
+	
+	private final CommentRepository commentRepository;
 	
 	public SiteUser create(String username, String email, String password, String customerId) {
         SiteUser user = new SiteUser();
@@ -87,4 +103,19 @@ public class UserService {
         return sb.toString();
     }
 	
+    public Page<Question> getUserQuestions(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Order.desc("createDate")));
+        return questionRepository.findByAuthorUsername(username, pageable);
+    }
+
+    public Page<Answer> getUserAnswers(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Order.desc("createDate")));
+        return answerRepository.findByAuthorUsername(username, pageable);
+    }
+
+    public Page<Comment> getUserComments(String username, int page) {
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Order.desc("createDate")));
+        return commentRepository.findByAuthorUsername(username, pageable);
+    }
+    
 }

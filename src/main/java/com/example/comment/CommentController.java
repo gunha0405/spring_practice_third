@@ -29,13 +29,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CommentController {
 
-	private CommentService commentService;
+	private final CommentService commentService;
 	
-	private QuestionService questionService;
+	private final QuestionService questionService;
 	
-	private AnswerService answerService;
+	private final AnswerService answerService;
 	
-	private UserService userService;
+	private final UserService userService;
 	
 	@PreAuthorize("isAuthenticated()")
 	@GetMapping(value = "/create/question/{id}")

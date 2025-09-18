@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.answer.AnswerForm;
+import com.example.category.Category;
+import com.example.category.CategoryService;
 import com.example.user.SiteUser;
 import com.example.user.UserService;
 
@@ -31,6 +33,8 @@ public class QuestionController {
 	private final QuestionService questionService;
 	
 	private final UserService userService;
+	
+	private final CategoryService categoryService;
 	
 	@GetMapping("/list")
     public String list(Model model, @RequestParam(value = "page", defaultValue = "0") int page,
@@ -50,19 +54,25 @@ public class QuestionController {
 	
 	@PreAuthorize("isAuthenticated()")
 	@GetMapping("/create")
-    public String questionCreate(QuestionForm questionForm) {
+    public String questionCreate(QuestionForm questionForm, Model model) {
+		List<Category> categories = this.categoryService.getAllCategories();
+        model.addAttribute("categories", categories);
         return "question_form";
     }
 	
 	@PreAuthorize("isAuthenticated()")
-	@PostMapping("/create")
-    public String questionCreate(@Valid QuestionForm questionForm, BindingResult bindingResult, Principal principal) {
+    @PostMapping("/create")
+    public String questionCreate(@Valid QuestionForm questionForm, BindingResult bindingResult, Principal principal, Model model) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("categories", categoryService.getAllCategories());
             return "question_form";
         }
-        SiteUser user = userService.getUser(principal.getName());
-        this.questionService.create(questionForm.getSubject(), questionForm.getContent(), user);
-        return "redirect:/question/list";
+        SiteUser siteUser = this.userService.getUser(principal.getName());
+        if (siteUser != null) {
+            this.questionService.create(questionForm.getSubject(), questionForm.getContent(), questionForm.getCategoryId(), siteUser);
+            return "redirect:/question/list";
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
     }
 	
 	@PreAuthorize("isAuthenticated()")

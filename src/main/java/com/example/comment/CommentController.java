@@ -22,21 +22,19 @@ import com.example.user.SiteUser;
 import com.example.user.UserService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @Controller
 @RequestMapping("/comment")
+@RequiredArgsConstructor
 public class CommentController {
 
-	@Autowired
 	private CommentService commentService;
 	
-	@Autowired
 	private QuestionService questionService;
 	
-	@Autowired
 	private AnswerService answerService;
 	
-	@Autowired
 	private UserService userService;
 	
 	@PreAuthorize("isAuthenticated()")

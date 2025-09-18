@@ -10,11 +10,13 @@ import com.example.answer.Answer;
 import com.example.question.Question;
 import com.example.user.SiteUser;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class CommentService {
 
-    @Autowired
-    private CommentRepository commentRepository;
+    private final CommentRepository commentRepository;
 
     public Comment create(Question question, SiteUser author, String content) {
         Comment c = new Comment();

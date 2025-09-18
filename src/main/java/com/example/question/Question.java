@@ -40,6 +40,9 @@ public class Question {
     
     private LocalDateTime modifyDate;
     
+    @Column(columnDefinition = "INT NOT NULL DEFAULT 0")
+    private int viewCount;
+    
     @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE) 
     private List<Answer> answerList;
     
@@ -54,4 +57,6 @@ public class Question {
     
     @ManyToOne
     private Category category;
+    
+    
 }

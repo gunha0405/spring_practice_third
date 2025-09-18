@@ -11,6 +11,8 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.transaction.Transactional;
+
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,10 +44,13 @@ public class QuestionService {
         return this.questionRepository.findAll(spec, pageable);
     }
     
+    @Transactional
     public Question getQuestion(Integer id) {  
         Optional<Question> question = this.questionRepository.findById(id);
         if (question.isPresent()) {
-            return question.get();
+        	Question q = question.get();
+        	q.setViewCount(q.getViewCount()+1);
+            return q;
         } else {
             throw new DataNotFoundException("question not found");
         }
@@ -56,6 +61,7 @@ public class QuestionService {
         q.setSubject(subject);
         q.setContent(content);
         q.setAuthor(user);
+        q.setViewCount(0);
         q.setCreateDate(LocalDateTime.now());
         if (categoryId != null) {
             Optional<Category> category = categoryRepository.findById(categoryId);

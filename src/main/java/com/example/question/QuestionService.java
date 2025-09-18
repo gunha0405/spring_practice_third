@@ -37,7 +37,7 @@ public class QuestionService {
     private final CategoryRepository categoryRepository;
 
     public Page<Question> getList(int page, String kw, String filter) {
-        Pageable pageable = PageRequest.of(page, 10);
+        Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Order.desc("createDate"))); // 기본 최신순
 
         if ("answer".equals(filter)) {
             return questionRepository.findQuestionsOrderByLatestAnswer(pageable);
@@ -47,6 +47,7 @@ public class QuestionService {
             return questionRepository.findByKeyword(kw, pageable);
         }
     }
+    
     @Transactional
     public Question getQuestion(Integer id) {  
         Optional<Question> question = this.questionRepository.findById(id);

@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.answer.Answer;
 import com.example.answer.AnswerForm;
+import com.example.answer.AnswerService;
 import com.example.category.Category;
 import com.example.category.CategoryService;
 import com.example.user.SiteUser;
@@ -32,6 +34,8 @@ public class QuestionController {
 	
 	private final QuestionService questionService;
 	
+	private final AnswerService answerService;
+	
 	private final UserService userService;
 	
 	private final CategoryService categoryService;
@@ -46,12 +50,21 @@ public class QuestionController {
         return "question_list";
     }
 	
-	@GetMapping(value = "/detail/{id}")
-    public String detail(Model model, @PathVariable("id") Integer id, AnswerForm answerForm) {
-		Question question = this.questionService.getQuestion(id);
-        model.addAttribute("question", question);
-        return "question_detail";
-    }
+	@GetMapping("/detail/{id}")
+	public String detail(Model model,
+	                     @PathVariable("id") Integer id,
+	                     @RequestParam(value = "page", defaultValue = "0") int page,
+	                     @RequestParam(value = "sort", defaultValue = "new") String sort) {
+	    Question question = this.questionService.getQuestion(id);
+	    Page<Answer> paging = this.answerService.getAnswersByQuestion(question, page, sort);
+
+	    model.addAttribute("question", question);
+	    model.addAttribute("answerPaging", paging);
+	    model.addAttribute("answerForm", new AnswerForm());
+	    model.addAttribute("sort", sort);
+	    return "question_detail";
+	}
+
 	
 	@PreAuthorize("isAuthenticated()")
 	@GetMapping("/create")

@@ -32,38 +32,35 @@ public class SecurityConfig {
 	
 	@Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            // 경로별 권한
-            .authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
-                .requestMatchers(new AntPathRequestMatcher("/**")).permitAll())
+		http
+	    .csrf(csrf -> csrf.disable()) // JWT 기반이면 CSRF 끔
+	    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // H2 콘솔
-            .csrf((csrf) -> csrf
-                .ignoringRequestMatchers(new AntPathRequestMatcher("/h2-console/**")))
-            .headers((headers) -> headers
-                .addHeaderWriter(new XFrameOptionsHeaderWriter(
-                    XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)))
+	    .authorizeHttpRequests(auth -> auth
+	        .requestMatchers("/h2-console/**", "/user/login", "/css/**", "/js/**", "/images/**").permitAll()
+	        .anyRequest().authenticated()
+	    )
 
-            // 로그인 (성공 시 JWT 발급 & 쿠키 셋팅)
-            .formLogin((formLogin) -> formLogin
-                .loginPage("/user/login")
-                .successHandler(jwtLoginSuccessHandler)
-                .defaultSuccessUrl("/"))
+	    .formLogin(form -> form
+	        .loginPage("/user/login")
+	        .loginProcessingUrl("/user/login")
+	        .successHandler(jwtLoginSuccessHandler)  // 성공 시 쿠키 세팅
+	        .permitAll()
+	    )
 
-            // 로그아웃 (쿠키 삭제까지)
-            .logout((logout) -> logout
-                .logoutRequestMatcher(new AntPathRequestMatcher("/user/logout"))
-                .logoutSuccessHandler((request, response, authentication) -> {
-                    Cookie expired = new Cookie("ACCESS_TOKEN", "");
-                    expired.setPath("/");
-                    expired.setMaxAge(0); // 즉시 만료
-                    response.addCookie(expired);
-                    response.sendRedirect("/");
-                })
-                .invalidateHttpSession(true))
+	    .logout(logout -> logout
+	        .logoutRequestMatcher(new AntPathRequestMatcher("/user/logout"))
+	        .logoutSuccessHandler((request, response, authentication) -> {
+	            Cookie expired = new Cookie("ACCESS_TOKEN", "");
+	            expired.setPath("/");
+	            expired.setMaxAge(0);
+	            response.addCookie(expired);
+	            response.sendRedirect("/");
+	        })
+	    )
 
-            // JwtFilter 등록 (UsernamePasswordAuthenticationFilter 이전에)
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+	    .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }

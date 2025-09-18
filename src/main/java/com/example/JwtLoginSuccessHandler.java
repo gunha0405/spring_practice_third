@@ -26,7 +26,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException, ServletException {
-
+		System.out.println("✅ JwtLoginSuccessHandler 실행됨: " + authentication.getName());
 		String username = authentication.getName();
         SiteUser user = userRepository.findByusername(username).orElseThrow();
         String token = jwtUtil.generateToken(user);

@@ -18,5 +18,6 @@ public interface AnswerRepository extends JpaRepository<Answer, Integer>{
            "GROUP BY a " +
            "ORDER BY COUNT(v) DESC, a.createDate DESC")
     Page<Answer> findByQuestionOrderByVoteCount(@Param("question") Question question, Pageable pageable);
-
+    
+    
 }

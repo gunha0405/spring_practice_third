@@ -30,6 +30,8 @@ public class SecurityConfig {
 	
 	private final JwtLoginSuccessHandler jwtLoginSuccessHandler;
 	
+	private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+	
 	@Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
@@ -46,6 +48,11 @@ public class SecurityConfig {
 	        .loginProcessingUrl("/user/login")
 	        .successHandler(jwtLoginSuccessHandler)  // 성공 시 쿠키 세팅
 	        .permitAll()
+	    )
+	    
+	    .oauth2Login(oauth2 -> oauth2
+	            .loginPage("/user/login")
+	            .successHandler(oAuth2LoginSuccessHandler) // 새로 만들 핸들러
 	    )
 
 	    .logout(logout -> logout
